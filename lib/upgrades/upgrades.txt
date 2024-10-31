@@ -1,0 +1,3 @@
+add a price to each item that the user can add in new item
+
+in the home page add a total price bar at the top that adds all these prices
