@@ -21,6 +21,7 @@ class _NewItemState extends State<NewItem> {
   var _enteredName = '';
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
+  var _enteredPrice = 0.0; // New property for price
   var _isSending = false;
 
   void _saveItem() async {
@@ -42,6 +43,7 @@ class _NewItemState extends State<NewItem> {
             'name': _enteredName,
             'quantity': _enteredQuantity,
             'category': _selectedCategory.title,
+            'price': _enteredPrice, // Send price to Firebase
           },
         ),
       );
@@ -57,6 +59,7 @@ class _NewItemState extends State<NewItem> {
             id: resData['name'],
             name: _enteredName,
             quantity: _enteredQuantity,
+            price: _enteredPrice, // sets price
             category: _selectedCategory),
       );
     }
@@ -146,6 +149,30 @@ class _NewItemState extends State<NewItem> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              TextFormField(
+                decoration: const InputDecoration(
+                  label:
+                      Text('Price per Item'), // Label displayed above the input
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true), // Ensures input supports decimals
+                validator: (value) {
+                  // Validation for the price
+                  if (value == null ||
+                      value.isEmpty ||
+                      double.tryParse(value) == null ||
+                      double.tryParse(value)! <= 0) {
+                    return 'Must be a valid, positive number.'; // Error message if input is invalid
+                  }
+                  return null; // Return null if the input passes validation
+                },
+                onSaved: (value) {
+                  _enteredPrice =
+                      double.parse(value!); // Saves the valid input as a double
+                },
+              ),
+              // Adds space between the price input and the next widget
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
