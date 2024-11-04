@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:shopping_list_app/data/categories.dart';
 import 'package:shopping_list_app/models/grocery_item.dart';
@@ -59,7 +57,7 @@ class _GroceryListState extends State<GroceryList> {
             id: item.key,
             name: item.value['name'],
             quantity: item.value['quantity'],
-            price: item.value['price'] ?? 0.0, // includes the price
+            price: item.value['price'] ?? 0.0,
             category: category,
           ),
         );
@@ -76,12 +74,11 @@ class _GroceryListState extends State<GroceryList> {
   }
 
   double _calculateTotalAmount() {
-    double total = 0.0; // Initializes the total amount
+    double total = 0.0;
     for (var item in _groceryItems) {
-      total += item.quantity * item.price; // Add the price for each item
+      total += item.quantity * item.price;
     }
-
-    return total; // Returns the calculated total
+    return total;
   }
 
   void _addItem() async {
@@ -119,46 +116,89 @@ class _GroceryListState extends State<GroceryList> {
     }
   }
 
+  // Method to group items by category
+  Map<String, List<GroceryItem>> _groupItemsByCategory() {
+    final Map<String, List<GroceryItem>> groupedItems = {};
+
+    for (final item in _groceryItems) {
+      if (!groupedItems.containsKey(item.category.title)) {
+        groupedItems[item.category.title] = [];
+      }
+      groupedItems[item.category.title]!.add(item);
+    }
+
+    return groupedItems;
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget totalAmountWidget = Padding(
       padding: const EdgeInsets.all(8.0),
       child: Text(
-        'Total Amount: \$${_calculateTotalAmount().toStringAsFixed(2)}', // Displays the total amount with two decimal places
+        'Total Amount: \$${_calculateTotalAmount().toStringAsFixed(2)}',
         style: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-        ), // Style for the total amount text
+        ),
       ),
     );
 
     Widget content = Column(
       children: [
-        totalAmountWidget, // Displays total amount at the top
+        totalAmountWidget,
         Expanded(
           child: _groceryItems.isEmpty
               ? const Center(child: Text('No items added yet.'))
-              : ListView.builder(
-                  itemCount: _groceryItems.length,
-                  itemBuilder: (ctx, index) => Dismissible(
-                    onDismissed: (direction) {
-                      _removeItem(_groceryItems[index]);
-                    },
-                    key: ValueKey(_groceryItems[index].id),
-                    child: ListTile(
-                      title: Text(_groceryItems[index].name),
-                      subtitle: Text(
-                          'Price: \$${_groceryItems[index].price.toStringAsFixed(2)}'), // Displays price
-                      leading: Container(
-                        width: 24,
-                        height: 24,
-                        color: _groceryItems[index].category.color,
-                      ),
-                      trailing: Text(
-                        _groceryItems[index].quantity.toString(),
-                      ),
-                    ),
-                  ),
+              : ListView(
+                  children: _groupItemsByCategory().entries.map((entry) {
+                    final categoryTitle = entry.key; // Category name
+                    final items = entry.value; // Items in that category
+
+                    // Get the color of the first item in this category group
+                    final categoryColor = items.first.category.color;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Displays category name as a header with dynamic color
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8.0, horizontal: 16.0),
+                          child: Text(
+                            categoryTitle,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: categoryColor, // Dynamic color
+                            ),
+                          ),
+                        ),
+                        // Displays each item under the category
+                        ...items.map((item) => Dismissible(
+                              key: ValueKey(item.id),
+                              onDismissed: (direction) {
+                                _removeItem(item);
+                              },
+                              child: ListTile(
+                                title: Text(
+                                  item.name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                
+                                subtitle: Text(
+                                    'Price: \$${item.price.toStringAsFixed(2)}'),
+                                trailing: Text(
+                                  item.quantity.toString(),
+                                ),
+                              ),
+                            )),
+                      ],
+                    );
+                  }).toList(),
                 ),
         ),
       ],
